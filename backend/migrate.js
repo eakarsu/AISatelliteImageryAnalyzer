@@ -138,6 +138,9 @@ async function migrate() {
       )
     `);
 
+    // Ensure analyses.created_by is indexed for user scoping
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_analyses_user ON analyses(created_by)`);
+
     // Indexes
     await client.query(`CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id)`);
     await client.query(`CREATE INDEX IF NOT EXISTS idx_bookmarks_analysis ON bookmarks(analysis_id)`);

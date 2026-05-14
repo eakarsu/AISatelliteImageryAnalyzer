@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Satellite, LogOut, User, MapPin, Bookmark, Activity, GitCompare,
-  FileText, Settings, ChevronDown,
+  FileText, Settings, ChevronDown, TrendingUp,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -12,6 +12,8 @@ import ThemeToggle from './ThemeToggle'
 const navItems = [
   { path: '/map', label: 'Map', icon: MapPin },
   { path: '/compare', label: 'Compare', icon: GitCompare },
+  { path: '/change-detection', label: 'Changes', icon: TrendingUp },
+  { path: '/timeline', label: 'Timeline', icon: TrendingUp },
   { path: '/reports', label: 'Reports', icon: FileText },
   { path: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
   { path: '/activity', label: 'Activity', icon: Activity },

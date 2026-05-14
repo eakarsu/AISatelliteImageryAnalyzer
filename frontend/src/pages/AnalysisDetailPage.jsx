@@ -97,12 +97,14 @@ export default function AnalysisDetailPage() {
 
   const handleRunAI = async () => {
     setAiLoading(true)
+    toast('Analyzing image with vision AI...', { icon: '🛰️' })
     try {
       const res = await api.post(`/analyses/${id}/ai-analyze`)
       const updated = res.data.analysis || res.data
       setAnalysis((prev) => ({ ...prev, ai_result: updated.ai_result || updated.aiResult || updated, status: updated.status || prev.status }))
-      toast.success('AI analysis completed!')
-    } catch { toast.error('AI analysis failed') }
+      const visionUsed = updated.ai_result?.visionUsed || false
+      toast.success(visionUsed ? 'AI vision analysis completed! Image was analyzed.' : 'AI analysis completed!')
+    } catch (err) { toast.error(err?.response?.data?.error || 'AI analysis failed') }
     finally { setAiLoading(false) }
   }
 
@@ -286,13 +288,25 @@ export default function AnalysisDetailPage() {
             <h3 style={{ fontSize: '18px', fontWeight: '700', color: theme.text, display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Brain size={22} color="#8b5cf6" /> AI Analysis Results
             </h3>
-            <button style={{
-              ...btn(aiLoading ? 'rgba(139,92,246,0.2)' : 'linear-gradient(135deg, #8b5cf6, #6d28d9)', '#fff', 'transparent'),
-              cursor: aiLoading ? 'not-allowed' : 'pointer',
-              boxShadow: aiLoading ? 'none' : '0 4px 15px rgba(139,92,246,0.3)',
-            }} onClick={handleRunAI} disabled={aiLoading}>
-              {aiLoading ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Analyzing...</> : <><Brain size={14} /> {aiResult ? 'Re-run Analysis' : 'Run AI Analysis'}</>}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {analysis.image_url && (
+                <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '20px', background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)', fontWeight: '600' }}>
+                  Vision Ready
+                </span>
+              )}
+              {aiResult?.visionUsed && (
+                <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '20px', background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.3)', fontWeight: '600' }}>
+                  Image Analyzed
+                </span>
+              )}
+              <button style={{
+                ...btn(aiLoading ? 'rgba(139,92,246,0.2)' : 'linear-gradient(135deg, #8b5cf6, #6d28d9)', '#fff', 'transparent'),
+                cursor: aiLoading ? 'not-allowed' : 'pointer',
+                boxShadow: aiLoading ? 'none' : '0 4px 15px rgba(139,92,246,0.3)',
+              }} onClick={handleRunAI} disabled={aiLoading}>
+                {aiLoading ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Analyzing image...</> : <><Brain size={14} /> {aiResult ? 'Re-run Vision Analysis' : 'Run Vision AI Analysis'}</>}
+              </button>
+            </div>
           </div>
           {aiLoading && (
             <div style={{ textAlign: 'center', padding: '48px 0', color: theme.textMuted }}>

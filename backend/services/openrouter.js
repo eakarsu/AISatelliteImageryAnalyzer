@@ -1,4 +1,6 @@
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -65,20 +67,44 @@ const CATEGORY_PROMPTS = {
   },
 };
 
-async function analyzeWithAI(category, data) {
+/**
+ * 3-strategy JSON parser for AI responses
+ */
+function parseAIJson(text) {
+  if (!text) throw new Error('Empty AI response');
+
+  // Strategy 1: Direct parse
+  try { return JSON.parse(text); } catch (_) {}
+
+  // Strategy 2: Strip markdown fences
+  try {
+    const stripped = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    return JSON.parse(stripped);
+  } catch (_) {}
+
+  // Strategy 3: Extract first JSON object or array
+  try {
+    const match = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+    if (match) return JSON.parse(match[0]);
+  } catch (_) {}
+
+  throw new Error('Failed to parse AI response as JSON');
+}
+
+async function analyzeWithAI(category, data, imageFilePath = null) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error('OPENROUTER_API_KEY is not configured');
   }
 
-  const model = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
+  const model = process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022';
   const categoryConfig = CATEGORY_PROMPTS[category];
 
   if (!categoryConfig) {
     throw new Error(`Unknown analysis category: ${category}`);
   }
 
-  const userPrompt = `Analyze the following satellite imagery data and provide a structured analysis result.
+  const textPrompt = `Analyze the following satellite imagery data and provide a structured analysis result.
 
 Title: ${data.title || 'Untitled Analysis'}
 Description: ${data.description || 'No description provided'}
@@ -98,6 +124,39 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code fences):
   }
 }`;
 
+  // Build messages with optional image
+  let userContent;
+  if (imageFilePath) {
+    // Read image file and convert to base64
+    try {
+      const absolutePath = imageFilePath.startsWith('/') ? imageFilePath : path.join(__dirname, '..', imageFilePath);
+      const imageBuffer = fs.readFileSync(absolutePath);
+      const base64Image = imageBuffer.toString('base64');
+
+      // Detect media type from extension
+      const ext = path.extname(absolutePath).toLowerCase();
+      const mediaTypeMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp' };
+      const mediaType = mediaTypeMap[ext] || 'image/jpeg';
+
+      userContent = [
+        {
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: mediaType,
+            data: base64Image,
+          },
+        },
+        { type: 'text', text: textPrompt },
+      ];
+    } catch (imgErr) {
+      console.warn('Failed to read image file, proceeding without vision:', imgErr.message);
+      userContent = textPrompt;
+    }
+  } else {
+    userContent = textPrompt;
+  }
+
   try {
     const response = await axios.post(
       OPENROUTER_URL,
@@ -105,7 +164,7 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code fences):
         model,
         messages: [
           { role: 'system', content: categoryConfig.system },
-          { role: 'user', content: userPrompt },
+          { role: 'user', content: userContent },
         ],
         temperature: 0.3,
         max_tokens: 2000,
@@ -114,7 +173,7 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code fences):
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
+          'HTTP-Referer': process.env.CLIENT_URL || process.env.APP_URL || 'http://localhost:3000',
           'X-Title': 'AI Satellite Imagery Analyzer',
         },
         timeout: 60000,
@@ -126,10 +185,7 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code fences):
       throw new Error('Empty response from OpenRouter');
     }
 
-    // Strip markdown code fences if present
-    const cleaned = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-
-    const parsed = JSON.parse(cleaned);
+    const parsed = parseAIJson(content);
 
     return {
       summary: parsed.summary || 'Analysis completed',
@@ -140,6 +196,7 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code fences):
       metrics: parsed.metrics || {},
       analyzedAt: new Date().toISOString(),
       model,
+      visionUsed: !!imageFilePath,
     };
   } catch (err) {
     if (err.response) {
@@ -154,4 +211,4 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code fences):
   }
 }
 
-module.exports = { analyzeWithAI, CATEGORY_PROMPTS };
+module.exports = { analyzeWithAI, CATEGORY_PROMPTS, parseAIJson };
