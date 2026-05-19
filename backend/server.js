@@ -54,6 +54,7 @@ app.use('/api/batch', batchRoutes);
 app.use('/api/compare', compareRoutes);
 app.use('/api/timeline', timelineRoutes);
 app.use('/api/imagery-ai', require('./routes/imageryAi'));
+app.use('/api/custom-views', require('./routes/customViews'));
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

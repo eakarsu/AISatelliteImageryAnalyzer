@@ -19,6 +19,7 @@ import VegetationIndexPage from './pages/VegetationIndexPage'
 import AreaCalculationPage from './pages/AreaCalculationPage'
 import ObjectDetectionPage from './pages/ObjectDetectionPage'
 import TemporalAnalysisPage from './pages/TemporalAnalysisPage'
+import CustomViewsPage from './pages/CustomViewsPage'
 
 // === Batch 07 Gaps & Frontend Mounts ===
 import CfAutomatedChangeDetection from './pages/CfAutomatedChangeDetection';
@@ -160,6 +161,10 @@ export default function App() {
       <Route
         path="/temporal-analysis"
         element={<ProtectedRoute><TemporalAnalysisPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/custom-views"
+        element={<ProtectedRoute><CustomViewsPage /></ProtectedRoute>}
       />
       <Route path="*" element={<Navigate to="/" replace />} />
           // === Batch 07 Gaps & Frontend Mounts ===
