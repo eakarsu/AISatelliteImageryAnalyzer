@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Satellite, LogOut, User, MapPin, Bookmark, Activity, GitCompare,
-  FileText, Settings, ChevronDown, TrendingUp,
+  FileText, Settings, ChevronDown, TrendingUp, LayoutGrid, Layers,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -17,6 +17,23 @@ const navItems = [
   { path: '/reports', label: 'Reports', icon: FileText },
   { path: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
   { path: '/activity', label: 'Activity', icon: Activity },
+  { path: '/custom-views', label: 'Imagery Views', icon: LayoutGrid },
+]
+
+const gapNavItems = [
+  { path: '/gap-no-changedetection-beforeafter', label: 'Change Detection (Before/After)' },
+  { path: '/gap-no-objectdetection-buildings-roads-vehicles', label: 'Object Detection' },
+  { path: '/gap-no-vegetationindex-ndvi-crop-health', label: 'Vegetation Index (NDVI)' },
+  { path: '/gap-no-cloudremoval', label: 'Cloud Removal' },
+  { path: '/gap-no-temporalanalysis-multidate-trends', label: 'Temporal Analysis' },
+  { path: '/gap-no-areacalculation-measure-features', label: 'Area Calculation' },
+  { path: '/gap-no-segmentationclassification-models', label: 'Segmentation / Classification' },
+  { path: '/gap-no-map-integration-leafletmapbox-backend-lay', label: 'Map Integration' },
+  { path: '/gap-no-geospatial-export-geotiff-shapefiles', label: 'Geospatial Export' },
+  { path: '/gap-no-layer-managementoverlay-system', label: 'Layer Management' },
+  { path: '/gap-no-roi-drawingmeasurement-persistence', label: 'ROI Drawing & Persistence' },
+  { path: '/gap-no-imagery-provider-api-planet-maxar-sentine', label: 'Imagery Provider API' },
+  { path: '/gap-no-webhook-delivery-for-completed-batch-jobs', label: 'Webhook Delivery' },
 ]
 
 export default function Header({ breadcrumbs = [] }) {
@@ -25,10 +42,15 @@ export default function Header({ breadcrumbs = [] }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [gapMenuOpen, setGapMenuOpen] = useState(false)
   const menuRef = useRef(null)
+  const gapMenuRef = useRef(null)
 
   useEffect(() => {
-    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false) }
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false)
+      if (gapMenuRef.current && !gapMenuRef.current.contains(e.target)) setGapMenuOpen(false)
+    }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
@@ -75,6 +97,45 @@ export default function Header({ breadcrumbs = [] }) {
             )
           })}
         </nav>
+
+        {/* Gap Features Dropdown */}
+        <div ref={gapMenuRef} style={{ position: 'relative' }}>
+          <button onClick={() => setGapMenuOpen(!gapMenuOpen)} style={{
+            padding: '6px 12px', borderRadius: '8px', border: 'none',
+            background: gapMenuOpen ? `${theme.accent}15` : 'transparent',
+            color: gapMenuOpen ? theme.accent : theme.textSecondary,
+            fontSize: '13px', fontWeight: '500', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: '5px', transition: 'all 0.15s',
+          }}
+            onMouseEnter={(e) => { if (!gapMenuOpen) e.currentTarget.style.color = theme.text }}
+            onMouseLeave={(e) => { if (!gapMenuOpen) e.currentTarget.style.color = theme.textSecondary }}
+          >
+            <Layers size={14} />
+            Gap Features
+            <ChevronDown size={12} style={{ transform: gapMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+          </button>
+          {gapMenuOpen && (
+            <div style={{
+              position: 'absolute', top: '38px', left: 0, width: '260px',
+              borderRadius: '12px', background: theme.bgSecondary, border: `1px solid ${theme.border}`,
+              boxShadow: '0 12px 32px rgba(0,0,0,0.3)', zIndex: 200, overflow: 'hidden',
+            }}>
+              {gapNavItems.map((item) => (
+                <button key={item.path} onClick={() => { navigate(item.path); setGapMenuOpen(false) }} style={{
+                  width: '100%', padding: '9px 16px', border: 'none', background: 'transparent',
+                  color: location.pathname === item.path ? theme.accent : theme.textSecondary,
+                  fontSize: '12px', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: '8px', textAlign: 'left',
+                  transition: 'background 0.15s',
+                }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = `${theme.accent}10`}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                  <Layers size={12} /> {item.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Breadcrumbs */}
         {breadcrumbs.length > 0 && (
