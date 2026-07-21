@@ -5,7 +5,7 @@ const pool = require('../db');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'satellite-imagery-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 // POST /api/auth/register

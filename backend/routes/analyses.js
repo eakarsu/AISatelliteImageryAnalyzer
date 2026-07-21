@@ -3,6 +3,11 @@ const pool = require('../db');
 const authMiddleware = require('../middleware/auth');
 const { aiRateLimiter } = require('../middleware/rateLimiter');
 const { analyzeWithAI } = require('../services/openrouter');
+const { createProviderGate } = require('../governance/providerGate');
+const legacyProviderGate = createProviderGate(['/']);
+const optionalProviderGate = (req, res, next) => (
+  req.body && req.body.runAI ? legacyProviderGate(req, res, next) : next()
+);
 const path = require('path');
 
 const router = express.Router();
@@ -86,7 +91,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 });
 
 // POST /api/analyses
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, optionalProviderGate, async (req, res) => {
   try {
     const { title, description, category, location, coordinates, priority, image_url, metadata, runAI } = req.body;
 
@@ -185,7 +190,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 });
 
 // POST /api/analyses/:id/ai-analyze - with vision AI + rate limiter
-router.post('/:id/ai-analyze', authMiddleware, aiRateLimiter, async (req, res) => {
+router.post('/:id/ai-analyze', authMiddleware, legacyProviderGate, aiRateLimiter, async (req, res) => {
   try {
     const { id } = req.params;
     const existing = await pool.query(
