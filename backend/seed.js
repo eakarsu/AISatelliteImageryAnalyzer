@@ -583,6 +583,12 @@ const SEED_DATA = {
   },
 };
 
+function requireDemoPassword() {
+  const password = process.env.DEMO_PASSWORD || process.env.SEED_DEMO_PASSWORD || process.env.DEMO_SEED_PASSWORD || '';
+  if (password.length < 12 || password.length > 1024) throw new Error('DEMO_PASSWORD must contain 12-1024 characters');
+  return password;
+}
+
 async function seed() {
   const client = await pool.connect();
   try {
@@ -627,7 +633,7 @@ async function seed() {
     console.log('Tables created successfully.');
 
     // Seed demo user
-    const hashedPassword = await bcrypt.hash('admin123', 12);
+    const hashedPassword = await bcrypt.hash(requireDemoPassword(), 12);
     const userResult = await client.query(
       'INSERT INTO users (email, password, name, role) VALUES ($1, $2, $3, $4) RETURNING id',
       ['admin@satellite.ai', hashedPassword, 'Admin User', 'admin']
@@ -676,7 +682,7 @@ async function seed() {
     console.log(`\nSeed complete! Created ${insertCount} analyses across ${CATEGORIES.length} categories.`);
     console.log('\nDemo credentials:');
     console.log('  Email: admin@satellite.ai');
-    console.log('  Password: admin123');
+    console.log('Demo login users provisioned from the local environment.');
   } catch (err) {
     console.error('Seed error:', err);
     throw err;

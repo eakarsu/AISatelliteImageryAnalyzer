@@ -34,8 +34,8 @@ export default function LoginPage() {
   }
 
   const handleDemoLogin = async () => {
-    setEmail('admin@satellite.ai')
-    setPassword('admin123')
+    setEmail(import.meta.env.VITE_DEMO_EMAIL || '')
+    setPassword(import.meta.env.VITE_DEMO_PASSWORD || '')
     setLoading(true)
     try {
       await login('admin@satellite.ai', 'admin123')
