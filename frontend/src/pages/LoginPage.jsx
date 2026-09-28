@@ -33,18 +33,9 @@ export default function LoginPage() {
     }
   }
 
-  const handleDemoLogin = async () => {
+  const handleDemoLogin = () => {
     setEmail(import.meta.env.VITE_DEMO_EMAIL || '')
     setPassword(import.meta.env.VITE_DEMO_PASSWORD || '')
-    setLoading(true)
-    try {
-      await login('admin@satellite.ai', 'admin123')
-      navigate('/', { replace: true })
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Demo login failed.')
-    } finally {
-      setLoading(false)
-    }
   }
 
   const styles = {
@@ -282,7 +273,7 @@ export default function LoginPage() {
           }}
         >
           <Zap size={18} />
-          Demo Login
+          Auto Fill Demo Credentials
         </button>
 
         <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '14px', color: '#64748b' }}>
